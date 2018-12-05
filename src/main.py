@@ -9,7 +9,7 @@ from DataLoader import DataLoader, Batch
 from Model import Model, DecoderType
 from SamplePreprocessor import preprocess
 
-
+# Defines all files neccessary and all their relative paths
 class FilePaths:
 	"filenames and paths to data"
 	fnCharList = '../model/charList.txt'
@@ -18,60 +18,70 @@ class FilePaths:
 	fnInfer = '../data/test.png'
 	fnCorpus = '../data/corpus.txt'
 
-
+# Trains the model on the chosen dataset
 def train(model, loader):
 	"train NN"
-	epoch = 0 # number of training epochs since start
-	bestCharErrorRate = float('inf') # best valdiation character error rate
-	noImprovementSince = 0 # number of epochs no improvement of character error rate occured
-	earlyStopping = 5 # stop training after this number of epochs without improvement
+	epoch = 0 # Hold the number of times the NN has been trained
+	bestCharErrorRate = float('inf') # Holds the best error rate
+	noImprovementSince = 0 # Holds the number of epochs since last improvement
+	earlyStopping = 10 # Stop training after this many epochs have been reached with no improvement
 	while True:
 		epoch += 1
 		print('Epoch:', epoch)
 
-		# train
+		# Actually train the algorithm
 		print('Train NN')
 		loader.trainSet()
+
+		# Iterates throught the dataset until there is none left
+		# Each iteration provides a loss that is backproped throughout the
+		# System
 		while loader.hasNext():
 			iterInfo = loader.getIteratorInfo()
 			batch = loader.getNext()
 			loss = model.trainBatch(batch)
 			print('Batch:', iterInfo[0],'/', iterInfo[1], 'Loss:', loss)
 
-		# validate
+		# Validate the model
 		charErrorRate = validate(model, loader)
 		
-		# if best validation accuracy so far, save model parameters
+		# If it is the best validation accuracy so far then save the params
 		if charErrorRate < bestCharErrorRate:
 			print('Character error rate improved, save model')
-			bestCharErrorRate = charErrorRate
-			noImprovementSince = 0
-			model.save()
+			bestCharErrorRate = charErrorRate # Set bestCharErrorRate for future comparisions
+			noImprovementSince = 0 # Reset to 0
+			model.save() # Save the current model
 			open(FilePaths.fnAccuracy, 'w').write('Validation character error rate of saved model: %f%%' % (charErrorRate*100.0))
 		else:
 			print('Character error rate not improved')
 			noImprovementSince += 1
 
-		# stop training if no more improvement in the last x epochs
+		# Stop training If there has been no improvements in teh last 10 epochs
 		if noImprovementSince >= earlyStopping:
 			print('No more improvement since %d epochs. Training stopped.' % earlyStopping)
 			break
 
-
+# Validates the model after a round of training
 def validate(model, loader):
-	"validate NN"
 	print('Validate NN')
 	loader.validationSet()
+	
+	# Init all to 0
 	numCharErr = 0
 	numCharTotal = 0
 	numWordOK = 0
 	numWordTotal = 0
+
+	# Main loop to validate against truth
 	while loader.hasNext():
+    	
+		# Gets next batch
 		iterInfo = loader.getIteratorInfo()
 		print('Batch:', iterInfo[0],'/', iterInfo[1])
 		batch = loader.getNext()
 		recognized = model.inferBatch(batch)
 		
+		# If the word is recognised or not
 		print('Ground truth -> Recognized')	
 		for i in range(len(recognized)):
 			numWordOK += 1 if batch.gtTexts[i] == recognized[i] else 0
@@ -96,34 +106,40 @@ def infer(model, fnImg):
 	print('Recognized:', '"' + recognized[0] + '"') # all batch elements hold same result
 
 
+# Main function for the program
 def main():
 	"main function"
-	# optional command line args
+	# Command line args for control of the program
 	parser = argparse.ArgumentParser()
+	# Train the algorithm
 	parser.add_argument("--train", help="train the NN", action="store_true")
+	# Validate the algorithm as is against the test dataset
 	parser.add_argument("--validate", help="validate the NN", action="store_true")
+	# Use beamsearch add on for better accuracy
 	parser.add_argument("--beamsearch", help="use beam search instead of best path decoding", action="store_true")
+	# Use wordbeamsearch for better accuracy on words
 	parser.add_argument("--wordbeamsearch", help="use word beam search instead of best path decoding", action="store_true")
 	args = parser.parse_args()
 
+	# If either beamsearch or wordbeamsearch set to that decoder
 	decoderType = DecoderType.BestPath
 	if args.beamsearch:
 		decoderType = DecoderType.BeamSearch
 	elif args.wordbeamsearch:
 		decoderType = DecoderType.WordBeamSearch
 
-	# train or validate on IAM dataset	
+	# If args is train or validate on IAM dataset
 	if args.train or args.validate:
-		# load training data, create TF model
+		# Load training data, create TF model
 		loader = DataLoader(FilePaths.fnTrain, Model.batchSize, Model.imgSize, Model.maxTextLen)
 
-		# save characters of model for inference mode
+		# Save characters of model for inference mode
 		open(FilePaths.fnCharList, 'w').write(str().join(loader.charList))
 		
-		# save words contained in dataset into file
+		# Save words contained in dataset into file
 		open(FilePaths.fnCorpus, 'w').write(str(' ').join(loader.trainWords + loader.validationWords))
 
-		# execute training or validation
+		# Execute training or validation
 		if args.train:
 			model = Model(loader.charList, decoderType)
 			train(model, loader)
@@ -131,7 +147,7 @@ def main():
 			model = Model(loader.charList, decoderType, mustRestore=True)
 			validate(model, loader)
 
-	# infer text on test image
+	# Infer text on test image
 	else:
 		print(open(FilePaths.fnAccuracy).read())
 		model = Model(open(FilePaths.fnCharList).read(), decoderType, mustRestore=True)

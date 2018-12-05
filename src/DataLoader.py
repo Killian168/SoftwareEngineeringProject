@@ -1,30 +1,31 @@
 from __future__ import division
 from __future__ import print_function
 
+# All imports used in file
 import os
 import random
 import numpy as np
 import cv2
 from SamplePreprocessor import preprocess
 
-
+# Creates a sample of the dataset
 class Sample:
 	"sample from the dataset"
 	def __init__(self, gtText, filePath):
 		self.gtText = gtText
 		self.filePath = filePath
 
-
+# Creates the batch containing the truth texts for the images
 class Batch:
 	"batch containing images and ground truth texts"
 	def __init__(self, gtTexts, imgs):
 		self.imgs = np.stack(imgs, axis=0)
 		self.gtTexts = gtTexts
 
-
+# Loads all data which have the IAM dataset format
 class DataLoader:
 	"loads data which corresponds to IAM format, see: http://www.fki.inf.unibe.ch/databases/iam-handwriting-database" 
-
+    
 	def __init__(self, filePath, batchSize, imgSize, maxTextLen):
 		"loader for dataset at given location, preprocess images and text according to parameters"
 
