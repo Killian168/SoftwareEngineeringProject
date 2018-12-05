@@ -1,1 +1,1 @@
-Error rate of current model: 13.956289%
+Error rate of current model:
