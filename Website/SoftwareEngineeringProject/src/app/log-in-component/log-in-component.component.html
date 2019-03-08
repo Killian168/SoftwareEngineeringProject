@@ -1,0 +1,20 @@
+<div class="container">
+    
+    <div class="avatar">
+      <img src="../../assets/Avatar.png"> 
+    </div>
+
+    <div class="reg-container">
+        <mat-form-field appearance="outline">
+            <mat-label>UserName</mat-label>
+            <input matInput placeholder="Enter your UserName">
+          </mat-form-field>
+      
+          <mat-form-field appearance="outline">
+            <mat-label>PassWord</mat-label>
+            <input matInput placeholder="Enter your password" [type]="hide ? 'password' : 'text'">
+            <mat-icon matSuffix (click)="hide = !hide">{{hide ? 'visibility_off' : 'visibility'}}</mat-icon>
+          </mat-form-field>
+    </div>
+
+  </div>
