@@ -142,5 +142,5 @@ def main(image, ctc):
 def modelInfer(image):
 		print(open(FilePaths.fnAccuracy).read())
 		model = Model(open(FilePaths.fnCharList).read(), 'wordbeamsearch', mustRestore=True)
-		return infer(model, FilePaths.fnInfer)
+		return infer(model, image)
 

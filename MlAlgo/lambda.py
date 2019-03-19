@@ -6,8 +6,8 @@ import queue
 from ImageCropQueue import cropImage
 from main import modelInfer
 
-def lambda_handler(event, context): # Event comes in as a dict, with the users Bucket
-                                    # and the users image name that was uploaded ti the bucket
+def handler(event, context): # Event comes in as a dict, with the users Bucket
+                                    # and the users images name that was uploaded to the bucket
     
     # Create Queue
     q = queue.Queue(maxsize=1000)
@@ -35,4 +35,4 @@ def lambda_handler(event, context): # Event comes in as a dict, with the users B
     
     # Send response
 
-    return "Hello"
+    return sentenceString
